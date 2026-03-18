@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Астро-02: Выживание</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Courier New', monospace; }
+        #vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+        #menu-button {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            border: 3px solid #0ff;
+            border-radius: 15px;
+            padding: 15px 25px;
+            color: #0ff;
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0,255,255,0.5);
+            animation: pulse 2s infinite;
+        }
+        #menu-button:hover { border-color: #ff0; color: #ff0; transform: scale(1.05); }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(0,255,255,0.5); }
+            50% { box-shadow: 0 0 40px rgba(0,255,255,0.8); }
+            100% { box-shadow: 0 0 20px rgba(0,255,255,0.5); }
+        }
+        #settings-menu {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.9);
+            border: 3px solid #0ff;
+            border-radius: 20px;
+            padding: 20px;
+            color: #0ff;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0,255,255,0.5);
+            min-width: 300px;
+            display: none;
+        }
+        .settings-header {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff0;
+            border-bottom: 2px solid #0ff;
+            padding-bottom: 10px;
+        }
+        .settings-section {
+            margin-bottom: 25px;
+            border-left: 2px solid #0ff;
+            padding-left: 15px;
+        }
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #ffaa00;
+            text-transform: uppercase;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .setting-btn {
+            background: rgba(0,40,80,0.8);
+            border: 2px solid #0ff;
+            color: #0ff;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: 0.2s;
+            flex: 1;
+            min-width: 80px;
+        }
+        .setting-btn:hover { background: rgba(0,80,160,0.8); border-color: #ff0; transform: scale(1.05); }
+        .setting-btn.active { background: rgba(0,255,255,0.3); border-color: #ff0; color: #ff0; box-shadow: 0 0 15px #ff0; }
+        .map-size-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: #ff0;
+        }
+        .map-size-bar {
+            height: 10px;
+            background: #1a1a2a;
+            border: 2px solid #0ff;
+            border-radius: 5px;
+            overflow: hidden;
+            flex: 1;
+            margin: 0 10px;
+        }
+        .map-size-fill {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(to right, #0ff, #f0f);
+            transition: width 0.3s;
+        }
+        #close-settings {
+            color: #f00;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 10px;
+            border-top: 1px solid #0ff;
+        }
+        #tutorial {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0,0,0,0.9);
+            border: 3px solid #ffaa00;
+            border-radius: 20px;
+            padding: 20px 40px;
+            color: #ffaa00;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(255,170,0,0.5);
+            text-align: center;
+            max-width: 600px;
+            pointer-events: none;
+        }
+        .tutorial-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #ff0;
+            text-shadow: 0 0 10px #ff0;
+        }
+        .tutorial-section { margin: 15px 0; text-align: left; }
+        .tutorial-key {
+            display: inline-block;
+            background: #333;
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            padding: 5px 15px;
+            margin: 3px;
+            font-weight: bold;
+            color: #ff0;
+            font-size: 18px;
+        }
+        .tutorial-text { color: #0ff; font-size: 16px; margin-top: 5px; }
+        .tutorial-note {
+            color: #f0f;
+            font-size: 14px;
+            margin-top: 10px;
+            border-top: 1px solid #ffaa00;
+            padding-top: 10px;
+        }
+        #tutorial.hide { display: none; }
+        #gui {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 100;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            padding: 15px 25px;
+            color: #0ff;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+        }
+        .gui-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #0ff;
+            padding-bottom: 5px;
+        }
+        .tank-container { display: flex; gap: 30px; margin-bottom: 15px; }
+        .tank {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .tank-label { font-size: 14px; margin-bottom: 5px; color: #aaf; }
+        .tank-bar-bg {
+            width: 60px;
+            height: 150px;
+            background: #1a1a2a;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .tank-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, #fff, #aaf);
+            transition: height 0.3s;
+            box-shadow: 0 0 15px #0ff;
+        }
+        .tank-value { margin-top: 5px; font-size: 16px; font-weight: bold; }
+        .hp-container {
+            margin-top: 15px;
+            border-top: 1px solid #0ff;
+            padding-top: 10px;
+        }
+        .hp-label { font-size: 14px; margin-bottom: 5px; color: #faa; }
+        .hp-bar-bg {
+            width: 100%;
+            height: 25px;
+            background: #2a1a1a;
+            border: 2px solid #f00;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .hp-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #f00, #f66);
+            transition: width 0.3s;
+        }
+        #hotbar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 25px;
+            border: 2px solid #0ff;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        .hotbar-slot {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #0ff;
+            font-size: 24px;
+            position: relative;
+            background: rgba(0,20,40,0.8);
+            box-shadow: 0 0 10px rgba(0,255,255,0.3);
+            cursor: pointer;
+        }
+        .hotbar-slot:hover { border-color: #ff0; transform: scale(1.05); }
+        .hotbar-slot.selected { border-color: #ff0; box-shadow: 0 0 20px #ff0; transform: scale(1.1); }
+        .slot-count {
+            position: absolute;
+            bottom: 2px;
+            right: 5px;
+            font-size: 14px;
+            color: #ff0;
+        }
+        #inventory-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1000px;
+            background: rgba(0,0,0,0.95);
+            border: 3px solid #0ff;
+            border-radius: 20px;
+            padding: 30px;
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(0,255,255,0.5);
+        }
+        .inventory-title {
+            color: #0ff;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0ff;
+        }
+        .inventory-sections { display: flex; gap: 30px; }
+        .inventory-section { flex: 1; }
+        .section-title {
+            color: #ff0;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ff0;
+            padding-bottom: 5px;
+        }
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .inventory-slot {
+            aspect-ratio: 1;
+            background: rgba(0,40,80,0.5);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #0ff;
+            font-size: 30px;
+            position: relative;
+            cursor: pointer;
+        }
+        .inventory-slot:hover { background: rgba(0,80,160,0.5); border-color: #ff0; }
+        .inventory-slot .item-count {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            font-size: 16px;
+            color: #ff0;
+        }
+        .inventory-slot .item-name { font-size: 10px; margin-top: 5px; text-align: center; }
+        .crafting-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .crafting-slot {
+            aspect-ratio: 1;
+            background: rgba(80,40,0,0.5);
+            border: 2px solid #ffaa00;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffaa00;
+            font-size: 30px;
+        }
+        .craft-result {
+            grid-column: span 2;
+            aspect-ratio: 1;
+            background: rgba(0,80,0,0.5);
+            border: 3px solid #ff0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff0;
+            font-size: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .craft-result:hover { background: rgba(0,150,0,0.5); transform: scale(1.05); }
+        .craft-result.disabled { opacity: 0.3; cursor: not-allowed; }
+        #workbench-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            background: rgba(30,20,10,0.95);
+            border: 3px solid #ffaa00;
+            border-radius: 20px;
+            padding: 30px;
+            z-index: 1100;
+            display: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(255,170,0,0.5);
+        }
+        .workbench-title {
+            color: #ffaa00;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ffaa00;
+        }
+        .workbench-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .workbench-slot {
+            aspect-ratio: 1;
+            background: rgba(100,60,20,0.5);
+            border: 2px solid #ffaa00;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffaa00;
+            font-size: 40px;
+        }
+        .workbench-result {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            background: rgba(0,100,0,0.5);
+            border: 3px solid #ff0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff0;
+            font-size: 50px;
+            cursor: pointer;
+        }
+        #close-workbench {
+            color: #f00;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        #tank-bench-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            background: rgba(0,30,50,0.95);
+            border: 3px solid #0ff;
+            border-radius: 20px;
+            padding: 30px;
+            z-index: 1100;
+            display: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(0,255,255,0.5);
+        }
+        .tank-bench-slot {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            background: rgba(0,40,80,0.5);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0ff;
+            font-size: 40px;
+            cursor: pointer;
+        }
+        .liquid-level {
+            width: 200px;
+            height: 30px;
+            background: #1a1a2a;
+            border: 2px solid #0ff;
+            border-radius: 15px;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+        .liquid-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #a0f, #f0f);
+            transition: width 0.3s;
+        }
+        #status-effect {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: #f00;
+            font-size: 24px;
+            text-shadow: 0 0 20px #f00;
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border: 2px solid #f00;
+            border-radius: 10px;
+            animation: blink 1s infinite;
+        }
+        #oxygen-low {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: #ffaa00;
+            font-size: 20px;
+            text-shadow: 0 0 15px #ffaa00;
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            padding: 8px 16px;
+            border: 2px solid #ffaa00;
+            border-radius: 10px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { opacity:0.5; } 50% { opacity:1; } 100% { opacity:0.5; } }
+        @keyframes blink { 0% { opacity:0.5; } 50% { opacity:1; } 100% { opacity:0.5; } }
+        #controls-hint {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: #888;
+            font-size: 14px;
+            background: rgba(0,0,0,0.4);
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        #interact-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0;
+            font-size: 24px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 30px;
+            border: 3px solid #ff0;
+            border-radius: 15px;
+            z-index: 200;
+            display: none;
+            text-shadow: 0 0 15px #ff0;
+            white-space: nowrap;
+        }
+        #info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0ff;
+            text-align: center;
+            text-shadow: 0 0 30px #0ff;
+            font-size: 36px;
+            font-weight: bold;
+            z-index: 200;
+            animation: flicker 4s forwards;
+            pointer-events: none;
+            white-space: nowrap;
+            background: rgba(0,0,0,0.7);
+            padding: 40px 60px;
+            border: 3px solid #0ff;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        #subtext {
+            font-size: 20px;
+            color: #ccc;
+            margin-top: 30px;
+            opacity: 0;
+            animation: appearLater 3s forwards;
+            animation-delay: 2.5s;
+        }
+        @keyframes flicker {
+            0% { opacity:0; } 20% { opacity:1; } 30% { opacity:0.3; } 40% { opacity:1; }
+            50% { opacity:0.5; } 60% { opacity:1; } 80% { opacity:0.8; } 100% { opacity:0; display:none; }
+        }
+        @keyframes appearLater { 0% { opacity:0; } 100% { opacity:1; } }
+        #cursor {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0f0;
+            font-size: 20px;
+            opacity: 0;
+            animation: blink 1s infinite;
+            animation-delay: 5s;
+            z-index: 200;
+        }
+        #debug {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #ff0;
+            font-size: 12px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="vignette"></div>
+    <div id="menu-button" onclick="toggleSettings()">⚙ НАСТРОЙКИ</div>
+    <div id="settings-menu">
+        <div class="settings-header">⚙ НАСТРОЙКИ</div>
+        <div class="settings-section">
+            <div class="section-title">ГРАФИКА</div>
+            <div class="button-group">
+                <button class="setting-btn" data-graphics="min">МИНИМАЛЬНАЯ</button>
+                <button class="setting-btn" data-graphics="medium">СРЕДНЯЯ</button>
+                <button class="setting-btn" data-graphics="high">ВЫСОКАЯ</button>
+                <button class="setting-btn" data-graphics="ultra">УЛЬТРА</button>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="section-title">РАЗМЕР КАРТЫ</div>
+            <div class="button-group">
+                <button class="setting-btn" data-size="mini">МИНИ</button>
+                <button class="setting-btn" data-size="small">МАЛЕНЬКАЯ</button>
+                <button class="setting-btn" data-size="medium">СРЕДНЯЯ</button>
+                <button class="setting-btn" data-size="large">БОЛЬШАЯ</button>
+                <button class="setting-btn" data-size="mega">МЕГА</button>
+                <button class="setting-btn" data-size="infinite">БЕСКОНЕЧНАЯ</button>
+            </div>
+            <div class="map-size-indicator">
+                <span>⬤</span>
+                <div class="map-size-bar"><div class="map-size-fill" id="map-size-fill" style="width:50%"></div></div>
+                <span>⬤⬤⬤</span>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="section-title">УПРАВЛЕНИЕ</div>
+            <div style="color:#0ff; font-size:14px; line-height:2;">
+                <div>🟦 W A S D - движение</div>
+                <div>🟦 F (А) - собрать ресурс</div>
+                <div>🟦 E (У) - поставить верстак</div>
+                <div>🟦 K (Л) - открыть/закрыть инвентарь</div>
+                <div>🟦 ESC - закрыть окна</div>
+                <div>🟦 1-5 - выбор хотбара</div>
+                <div>🟦 ПКМ по верстаку - открыть</div>
+            </div>
+        </div>
+        <div id="close-settings" onclick="toggleSettings()">[ЗАКРЫТЬ]</div>
+    </div>
+    <div id="tutorial">
+        <div class="tutorial-title">🚀 КАК ИГРАТЬ</div>
+        <div class="tutorial-section">
+            <div><span class="tutorial-key">W A S D</span> - движение</div>
+            <div><span class="tutorial-key">F (А)</span> - собрать ресурс</div>
+            <div><span class="tutorial-key">E (У)</span> - поставить верстак</div>
+            <div><span class="tutorial-key">K (Л)</span> - открыть/закрыть инвентарь</div>
+            <div><span class="tutorial-key">ESC</span> - закрыть окна</div>
+            <div><span class="tutorial-key">1-5</span> - выбрать слот хотбара</div>
+        </div>
+        <div class="tutorial-section">
+            <div class="tutorial-text">📦 В ИНВЕНТАРЕ:</div>
+            <div><span class="tutorial-key">ЛКМ</span> - положить в хотбар</div>
+            <div><span class="tutorial-key">ПКМ</span> - положить в крафт (2х2)</div>
+        </div>
+        <div class="tutorial-section">
+            <div class="tutorial-text">🔧 РЕЦЕПТЫ:</div>
+            <div>• Верстак: 4 черных камня ⬛⬛⬛⬛</div>
+            <div>• Ведро: 3 железа ⛓️⛓️⛓️</div>
+            <div>• Баллонный верстак: 5 железа (в верстаке 3х3)</div>
+        </div>
+        <div class="tutorial-note">Воздух тратится каждые 1.3 сек. Когда кончится - HP падает!</div>
+    </div>
+    <div id="info">
+        █ КОСМИЧЕСКИЙ КОРАБЛЬ АСТРО-02<br>
+        █ ПОТЕРПЕЛ КРУШЕНИЕ<br>
+        █ НА НЕИЗВЕСТНОЙ ПЛАНЕТЕ D-03<br>
+        <div id="subtext">
+            █ ТЫ ЕДИНСТВЕННЫЙ ВЫЖИВШИЙ<br>
+            █ ТВОЯ ЦЕЛЬ: ВОЗРОДИТЬ ЭТУ ПЛАНЕТУ<br>
+            █ ЗДЕСЬ КОГДА-ТО БЫЛА ЖИЗНЬ...
+        </div>
+    </div>
+    <div id="cursor">▶ НАЖМИ ЛЮБУЮ КЛАВИШУ ЧТОБЫ НАЧАТЬ</div>
+    <div id="controls-hint">WASD - движение | F - собрать | E - поставить | K - инвентарь</div>
+    <div id="debug">Нажми K чтобы открыть инвентарь</div>
+    <div id="hotbar">
+        <div class="hotbar-slot selected" id="slot-1" data-hotbar="0">⬛<span class="slot-count" id="slot1-count">0</span></div>
+        <div class="hotbar-slot" id="slot-2" data-hotbar="1">⬛<span class="slot-count" id="slot2-count">0</span></div>
+        <div class="hotbar-slot" id="slot-3" data-hotbar="2">⬛<span class="slot-count" id="slot3-count">0</span></div>
+        <div class="hotbar-slot" id="slot-4" data-hotbar="3">⬛<span class="slot-count" id="slot4-count">0</span></div>
+        <div class="hotbar-slot" id="slot-5" data-hotbar="4">⬛<span class="slot-count" id="slot5-count">0</span></div>
+    </div>
+    <div id="inventory-container">
+        <div class="inventory-title">║ ИНВЕНТАРЬ (K - закрыть) ║</div>
+        <div class="inventory-sections">
+            <div class="inventory-section">
+                <div class="section-title">ИНВЕНТАРЬ (ЛКМ - хотбар, ПКМ - крафт)</div>
+                <div class="inventory-grid" id="inventory-grid"></div>
+            </div>
+            <div class="inventory-section">
+                <div class="section-title">КРАФТ (2х2)</div>
+                <div class="crafting-grid" id="crafting-grid">
+                    <div class="crafting-slot" id="craft-slot-1"></div>
+                    <div class="crafting-slot" id="craft-slot-2"></div>
+                    <div class="crafting-slot" id="craft-slot-3"></div>
+                    <div class="crafting-slot" id="craft-slot-4"></div>
+                    <div class="craft-result" id="craft-result">?</div>
+                </div>
+            </div>
+        </div>
+        <div id="close-inventory" style="color:#f00; text-align:center; margin-top:20px; cursor:pointer;" onclick="window.closeInventory()">[НАЖМИ K ЧТОБЫ ЗАКРЫТЬ]</div>
+    </div>
+    <div id="workbench-container">
+        <div class="workbench-title">║ ВЕРСТАК (K - закрыть) ║</div>
+        <div class="workbench-grid" id="workbench-grid"></div>
+        <div class="workbench-result" id="workbench-result">?</div>
+        <div id="close-workbench" style="color:#f00; text-align:center; margin-top:20px; cursor:pointer;" onclick="window.closeWorkbench()">[НАЖМИ K ЧТОБЫ ЗАКРЫТЬ]</div>
+    </div>
+    <div id="tank-bench-container">
+        <div class="workbench-title">║ ЗАПРАВКА БАЛЛОНОВ (K - закрыть) ║</div>
+        <div class="tank-bench-slot" id="tank-slot">⬛</div>
+        <div class="liquid-level"><div class="liquid-fill" id="liquid-fill" style="width:100%"></div></div>
+        <div style="color:#0ff; text-align:center; margin-bottom:20px;" id="liquid-amount">Фиолетовая жидкость: 100%</div>
+        <div class="workbench-result" id="refill-button" style="width:200px;">ЗАПРАВИТЬ</div>
+        <div id="close-tank-bench" style="color:#f00; text-align:center; margin-top:20px; cursor:pointer;" onclick="window.closeTankBench()">[НАЖМИ K ЧТОБЫ ЗАКРЫТЬ]</div>
+    </div>
+    <div id="gui">
+        <div class="gui-title">║ СИСТЕМЫ ЖИЗНЕОБЕСПЕЧЕНИЯ ║</div>
+        <div class="tank-container">
+            <div class="tank"><div class="tank-label">БАЛЛОН 01</div><div class="tank-bar-bg"><div id="tank1-fill" class="tank-fill" style="height:80%"></div></div><div id="tank1-value" class="tank-value">80%</div></div>
+            <div class="tank"><div class="tank-label">БАЛЛОН 02</div><div class="tank-bar-bg"><div id="tank2-fill" class="tank-fill" style="height:70%"></div></div><div id="tank2-value" class="tank-value">70%</div></div>
+        </div>
+        <div class="hp-container"><div class="hp-label">ЖИЗНИ (HP)</div><div class="hp-bar-bg"><div id="hp-fill" class="hp-fill" style="width:100%"></div></div></div>
+    </div>
+    <div id="status-effect" style="display:none;">⚠ КИСЛОРОДНЫЙ ГОЛОД ⚠</div>
+    <div id="oxygen-low" style="display:none;">⚠ КИСЛОРОДА МАЛО ⚠</div>
+    <div id="interact-hint">Нажми F чтобы собрать</div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // ==================== СОСТОЯНИЕ ====================
+        const playerState = {
+            tank1: 80, tank2: 70, hp: 100, helmetCrack: 0.5,
+            isSuffocating: false, gameStarted: false,
+            position: { x: 2, z: 3 },
+            inventory: Array(20).fill().map(() => ({ id: 'empty', name: '', icon: '⬛', count: 0 })),
+            hotbar: [-1, -1, -1, -1, -1],
+            selectedHotbar: 0,
+            inventoryOpen: false, workbenchOpen: false, tankBenchOpen: false,
+            craftingSlots: [null, null, null, null],
+            workbenchSlots: Array(9).fill(null),
+            liquidAmount: 100,
+            placedWorkbenches: [], placedTankBenches: [],
+            graphics: 'ultra', mapSize: 'medium',
+            extraLights: [], particles: [], resources: [], groundRadius: 50
+        };
+
+        const recipes2x2 = {
+            workbench: { pattern: ['black_stone','black_stone','black_stone','black_stone'], result: { id:'workbench', name:'Верстак', icon:'🔨', count:1 } },
+            bucket: { pattern: ['iron','iron','iron',null], result: { id:'bucket', name:'Ведро', icon:'🪣', count:1 } }
+        };
+        const recipes3x3 = {
+            tank_bench: { pattern: ['iron','iron','iron','iron','iron',null,null,null,null], result: { id:'tank_bench', name:'Баллонный верстак', icon:'🧪', count:1 } },
+            oxygen_tank: { pattern: ['iron','black_stone','iron','iron',null,'iron','iron','iron','iron'], result: { id:'oxygen_tank', name:'Баллон', icon:'🫧', count:1 } }
+        };
+
+        // ==================== UI элементы ====================
+        const tank1Fill = document.getElementById('tank1-fill');
+        const tank2Fill = document.getElementById('tank2-fill');
+        const tank1Value = document.getElementById('tank1-value');
+        const tank2Value = document.getElementById('tank2-value');
+        const hpFill = document.getElementById('hp-fill');
+        const statusEffect = document.getElementById('status-effect');
+        const oxygenLow = document.getElementById('oxygen-low');
+        const inventoryContainer = document.getElementById('inventory-container');
+        const inventoryGrid = document.getElementById('inventory-grid');
+        const workbenchContainer = document.getElementById('workbench-container');
+        const workbenchGrid = document.getElementById('workbench-grid');
+        const workbenchResult = document.getElementById('workbench-result');
+        const tankBenchContainer = document.getElementById('tank-bench-container');
+        const tankSlot = document.getElementById('tank-slot');
+        const liquidFill = document.getElementById('liquid-fill');
+        const liquidAmount = document.getElementById('liquid-amount');
+        const refillButton = document.getElementById('refill-button');
+        const interactHint = document.getElementById('interact-hint');
+        const debugDiv = document.getElementById('debug');
+        const hotbarSlots = document.querySelectorAll('.hotbar-slot');
+        const tutorialDiv = document.getElementById('tutorial');
+        const settingsMenu = document.getElementById('settings-menu');
+        const menuButton = document.getElementById('menu-button');
+        const mapSizeFill = document.getElementById('map-size-fill');
+
+        window.closeInventory = () => { playerState.inventoryOpen = false; inventoryContainer.style.display = 'none'; };
+        window.closeWorkbench = () => { playerState.workbenchOpen = false; workbenchContainer.style.display = 'none'; };
+        window.closeTankBench = () => { playerState.tankBenchOpen = false; tankBenchContainer.style.display = 'none'; };
+        window.toggleSettings = () => {
+            if (settingsMenu.style.display === 'none') { settingsMenu.style.display = 'block'; menuButton.style.display = 'none'; }
+            else { settingsMenu.style.display = 'none'; menuButton.style.display = 'block'; }
+        };
+        function hideTutorial() { tutorialDiv.classList.add('hide'); }
+
+        // ==================== СЦЕНА ====================
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a1030);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(2,3,8);
+        const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:"high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0x404870); scene.add(ambientLight);
+        const sunLight = new THREE.DirectionalLight(0xffeedd, 1.2); sunLight.position.set(10,30,15);
+        sunLight.castShadow = true; sunLight.receiveShadow = true; scene.add(sunLight);
+
+        // ==================== КОСМОНАВТ ====================
+        const playerGroup = new THREE.Group(); playerGroup.position.set(playerState.position.x,0.5,playerState.position.z);
+        const bodyGeo = new THREE.CylinderGeometry(0.55,0.65,1.3,12);
+        const bodyMat = new THREE.MeshStandardMaterial({ color:0xf0f0f0 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat); body.position.y = 0.65; body.castShadow = true; body.receiveShadow = true; playerGroup.add(body);
+        const helmetGeo = new THREE.SphereGeometry(0.45,32,32);
+        const helmetMat = new THREE.MeshStandardMaterial({ color:0x88aaff, transparent:true, opacity:0.4 });
+        const helmet = new THREE.Mesh(helmetGeo, helmetMat); helmet.position.y = 1.25; helmet.castShadow = true; playerGroup.add(helmet);
+        const helmetLight = new THREE.PointLight(0x88aaff,2,5); helmetLight.position.set(0,1.3,0.3); playerGroup.add(helmetLight);
+        scene.add(playerGroup);
+
+        // ==================== КОРАБЛЬ ====================
+        const shipGroup = new THREE.Group(); shipGroup.position.set(0,0.5,0);
+        const shipBodyGeo = new THREE.CylinderGeometry(2,2.5,5,12);
+        const shipBodyMat = new THREE.MeshStandardMaterial({ color:0x88aacc });
+        const shipBody = new THREE.Mesh(shipBodyGeo, shipBodyMat); shipBody.position.y = 2; shipBody.castShadow = true; shipGroup.add(shipBody);
+        const shipLight = new THREE.PointLight(0x88aaff,2.5,15); shipLight.position.set(0,3,2); shipGroup.add(shipLight);
+        scene.add(shipGroup);
+
+        // ==================== ЗВЕЗДЫ ====================
+        const starsGeo = new THREE.BufferGeometry();
+        const starsPos = new Float32Array(2000*3);
+        for (let i=0; i<2000*3; i+=3) { starsPos[i]=(Math.random()-0.5)*400; starsPos[i+1]=(Math.random()-0.5)*400; starsPos[i+2]=(Math.random()-0.5)*400-100; }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos,3));
+        const starsMat = new THREE.PointsMaterial({ color:0xffffff, size:0.3 });
+        const stars = new THREE.Points(starsGeo, starsMat); scene.add(stars);
+
+        // ==================== ФУНКЦИИ СОЗДАНИЯ КАРТЫ ====================
+        let ground, lake, particles;
+        function createMap(size) {
+            if (ground) scene.remove(ground); if (lake) scene.remove(lake); if (particles) scene.remove(particles);
+            let radius, lakePos, resourceCount, crystalCount;
+            switch(size) {
+                case 'mini': radius=20; lakePos=8; resourceCount=8; crystalCount=5; mapSizeFill.style.width='10%'; break;
+                case 'small': radius=40; lakePos=12; resourceCount=15; crystalCount=10; mapSizeFill.style.width='25%'; break;
+                case 'medium': radius=80; lakePos=18; resourceCount=25; crystalCount=20; mapSizeFill.style.width='50%'; break;
+                case 'large': radius=150; lakePos=30; resourceCount=40; crystalCount=35; mapSizeFill.style.width='75%'; break;
+                case 'mega': radius=300; lakePos=50; resourceCount=70; crystalCount=60; mapSizeFill.style.width='90%'; break;
+                case 'infinite': radius=1000; lakePos=100; resourceCount=200; crystalCount=150; mapSizeFill.style.width='100%'; break;
+            }
+            playerState.groundRadius = radius;
+            ground = new THREE.Mesh(new THREE.CircleGeometry(radius,128), new THREE.MeshStandardMaterial({ color:0x2a4a5a }));
+            ground.rotation.x = -Math.PI/2; ground.position.y = -0.5; ground.receiveShadow = true; scene.add(ground);
+            for (let i=0; i<Math.floor(radius*0.3); i++) {
+                const c = new THREE.Mesh(new THREE.CylinderGeometry(0.5+Math.random()*1.5,0.7+Math.random()*1.5,0.1,8), new THREE.MeshStandardMaterial({ color:0x1a3a4a }));
+                const a = Math.random()*Math.PI*2, d = 5+Math.random()*(radius-10);
+                c.position.set(Math.cos(a)*d, -0.45, Math.sin(a)*d); c.receiveShadow = true; scene.add(c);
+            }
+            lake = new THREE.Mesh(new THREE.CylinderGeometry(6,6,0.3,64), new THREE.MeshStandardMaterial({ color:0xcc88ff, emissive:0x440088, transparent:true, opacity:0.8 }));
+            lake.position.set(lakePos,0,lakePos); lake.receiveShadow = true; scene.add(lake);
+            const pCount = Math.floor(radius*0.5);
+            const pGeo = new THREE.BufferGeometry(); const pPos = new Float32Array(pCount*3);
+            for (let i=0; i<pCount; i++) { const a=Math.random()*Math.PI*2, r=3+Math.random()*3; pPos[i*3]=lakePos+Math.cos(a)*r; pPos[i*3+1]=1+Math.random()*4; pPos[i*3+2]=lakePos+Math.sin(a)*r; }
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+            particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ color:0xcc88ff, size:0.2, transparent:true, blending:THREE.AdditiveBlending }));
+            scene.add(particles);
+            for (let i=0; i<crystalCount; i++) {
+                const c = new THREE.Mesh(new THREE.ConeGeometry(0.3,0.8,6), new THREE.MeshStandardMaterial({ color:0x88aaff, emissive:0x224466, transparent:true, opacity:0.8 }));
+                const a=Math.random()*Math.PI*2, d=8+Math.random()*(radius-15); c.position.set(Math.cos(a)*d,0.3,Math.sin(a)*d); c.castShadow = true; scene.add(c);
+            }
+            playerState.resources.forEach(r => scene.remove(r.mesh)); playerState.resources = [];
+            const types = [
+                { id:'black_stone', name:'Черный камень', icon:'⬛', color:0x333333 },
+                { id:'iron', name:'Железо', icon:'⛓️', color:0xcccccc }
+            ];
+            for (let i=0; i<resourceCount; i++) {
+                const t = types[Math.floor(Math.random()*2)];
+                const geo = t.id==='black_stone' ? new THREE.BoxGeometry(0.4,0.2,0.4) : new THREE.SphereGeometry(0.2);
+                const mat = new THREE.MeshStandardMaterial({ color:t.color, metalness:t.id==='iron'?0.8:0.1 });
+                const m = new THREE.Mesh(geo, mat);
+                const a=Math.random()*Math.PI*2, d=5+Math.random()*(radius-10); m.position.set(Math.cos(a)*d,0.2,Math.sin(a)*d); m.castShadow=m.receiveShadow=true; scene.add(m);
+                playerState.resources.push({ mesh:m, type:t, collected:false, amount: t.id==='black_stone' ? Math.floor(Math.random()*8)+1 : Math.floor(Math.random()*4)+1 });
+            }
+            debugDiv.innerHTML = `Карта: ${size} (${radius} ед.) | Графика: ${playerState.graphics}`;
+        }
+
+        // ==================== НАСТРОЙКИ ГРАФИКИ ====================
+        function updateGraphics(level) {
+            playerState.graphics = level;
+            document.querySelectorAll('[data-graphics]').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-graphics="${level}"]`).classList.add('active');
+            playerState.extraLights.forEach(l => scene.remove(l)); playerState.extraLights = [];
+            switch(level) {
+                case 'min':
+                    renderer.shadowMap.enabled = false; renderer.toneMappingExposure = 0.8;
+                    scene.fog = new THREE.Fog(0x0a0a1a,15,30); scene.background.setHex(0x0a0a1a);
+                    helmetLight.intensity = 0; shipLight.intensity = 0; stars.material.opacity = 0.3; if(particles) particles.material.opacity = 0;
+                    break;
+                case 'medium':
+                    renderer.shadowMap.enabled = true; renderer.toneMappingExposure = 1.0;
+                    scene.fog = new THREE.Fog(0x0a1030,20,50); scene.background.setHex(0x0a1030);
+                    helmetLight.intensity = 1; shipLight.intensity = 1.5; stars.material.opacity = 0.6; if(particles) particles.material.opacity = 0.5;
+                    break;
+                case 'high':
+                    renderer.shadowMap.enabled = true; renderer.toneMappingExposure = 1.1;
+                    scene.fog = new THREE.Fog(0x0a1535,25,70); scene.background.setHex(0x0a1535);
+                    helmetLight.intensity = 1.5; shipLight.intensity = 2; stars.material.opacity = 0.8; if(particles) particles.material.opacity = 0.8;
+                    const f1 = new THREE.PointLight(0x446688,0.8); f1.position.set(-10,8,10); scene.add(f1); playerState.extraLights.push(f1);
+                    break;
+                case 'ultra':
+                    renderer.shadowMap.enabled = true; renderer.toneMappingExposure = 1.3;
+                    scene.fog = new THREE.Fog(0x0a1a3a,30,100); scene.background.setHex(0x0a1a3a);
+                    helmetLight.intensity = 2; shipLight.intensity = 2.5; stars.material.opacity = 1; stars.material.size = 0.4; if(particles) particles.material.opacity = 1;
+                    [[-15,10,15],[15,8,-15],[-10,12,-20],[20,6,10]].forEach(pos => {
+                        const l = new THREE.PointLight(0x88aaff,0.6); l.position.set(pos[0],pos[1],pos[2]); scene.add(l); playerState.extraLights.push(l);
+                    });
+                    break;
+            }
+            debugDiv.innerHTML = `Карта: ${playerState.mapSize} | Графика: ${level}`;
+        }
+
+        function updateMapSize(size) {
+            playerState.mapSize = size;
+            document.querySelectorAll('[data-size]').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-size="${size}"]`).classList.add('active');
+            createMap(size);
+            updateGraphics(playerState.graphics);
+        }
+
+        document.querySelectorAll('[data-graphics]').forEach(b => b.addEventListener('click',()=>updateGraphics(b.dataset.graphics)));
+        document.querySelectorAll('[data-size]').forEach(b => b.addEventListener('click',()=>updateMapSize(b.dataset.size)));
+
+        // ==================== УПРАВЛЕНИЕ ====================
+        const keyState = { w:false, a:false, s:false, d:false };
+        window.addEventListener('keydown', (e) => {
+            if (!playerState.gameStarted) return;
+            const key = e.key.toLowerCase();
+            const code = e.code;
+            debugDiv.innerHTML = `Нажата: ${key}`;
+
+            // === ОБРАБОТКА K (русская Л) ===
+            if (key === 'k' || key === 'л') {
+                e.preventDefault();
+                if (playerState.inventoryOpen) {
+                    playerState.inventoryOpen = false;
+                    inventoryContainer.style.display = 'none';
+                } else if (playerState.workbenchOpen) {
+                    playerState.workbenchOpen = false;
+                    workbenchContainer.style.display = 'none';
+                } else if (playerState.tankBenchOpen) {
+                    playerState.tankBenchOpen = false;
+                    tankBenchContainer.style.display = 'none';
+                } else {
+                    playerState.inventoryOpen = true;
+                    inventoryContainer.style.display = 'block';
+                    renderInventory();
+                    checkCrafting2x2();
+                }
+                return;
+            }
+
+            switch(code) {
+                case 'KeyW': keyState.w = true; e.preventDefault(); break;
+                case 'KeyA': keyState.a = true; e.preventDefault(); break;
+                case 'KeyS': keyState.s = true; e.preventDefault(); break;
+                case 'KeyD': keyState.d = true; e.preventDefault(); break;
+            }
+            if (e.key >= '1' && e.key <= '5') selectHotbar(parseInt(e.key)-1);
+        });
+        window.addEventListener('keyup', (e) => {
+            const code = e.code;
+            if (code === 'KeyW') keyState.w = false;
+            if (code === 'KeyA') keyState.a = false;
+            if (code === 'KeyS') keyState.s = false;
+            if (code === 'KeyD') keyState.d = false;
+        });
+
+        // ==================== ИНВЕНТАРЬ ====================
+        function renderInventory() {
+            let html = '';
+            playerState.inventory.forEach((item, idx) => {
+                const inHotbar = playerState.hotbar.includes(idx);
+                const hotbarIdx = playerState.hotbar.indexOf(idx);
+                html += `<div class="inventory-slot" data-index="${idx}" oncontextmenu="window.moveToCrafting(${idx}); return false;" onclick="window.moveToHotbar(${idx})" style="${inHotbar?'border-color:#ff0;':''}">${item.icon}<div class="item-name">${item.name}${inHotbar?' [ХБ '+(hotbarIdx+1)+']':''}</div>${item.count>0?`<div class="item-count">${item.count}</div>`:''}</div>`;
+            });
+            inventoryGrid.innerHTML = html;
+            updateHotbar();
+        }
+        function updateHotbar() {
+            playerState.hotbar.forEach((invIdx, slotIdx) => {
+                const item = invIdx!==-1 ? playerState.inventory[invIdx] : { icon:'⬛', count:0 };
+                document.getElementById(`slot-${slotIdx+1}`).innerHTML = `${item.icon}<span class="slot-count">${item.count}</span>`;
+            });
+            document.querySelectorAll('.hotbar-slot').forEach(s=>s.classList.remove('selected'));
+            document.getElementById(`slot-${playerState.selectedHotbar+1}`).classList.add('selected');
+        }
+        function selectHotbar(idx) { playerState.selectedHotbar = idx; updateHotbar(); }
+        window.moveToHotbar = (invIdx) => {
+            if (!playerState.inventoryOpen) return;
+            const item = playerState.inventory[invIdx];
+            if (item.id==='empty' || item.count<=0) return;
+            const existing = playerState.hotbar.indexOf(invIdx);
+            if (existing !== -1) { playerState.hotbar[existing] = -1; }
+            else {
+                const empty = playerState.hotbar.findIndex(h=>h===-1);
+                if (empty !== -1) playerState.hotbar[empty] = invIdx;
+                else playerState.hotbar[playerState.selectedHotbar] = invIdx;
+            }
+            renderInventory(); updateHotbar();
+        };
+        window.moveToCrafting = (invIdx) => {
+            if (!playerState.inventoryOpen) return;
+            const item = playerState.inventory[invIdx];
+            if (item.id==='empty' || item.count<=0) return;
+            for (let i=0; i<4; i++) {
+                if (playerState.craftingSlots[i]===null) {
+                    playerState.craftingSlots[i] = { ...item, invIndex:invIdx };
+                    playerState.inventory[invIdx].count--;
+                    if (playerState.inventory[invIdx].count<=0) playerState.inventory[invIdx] = { id:'empty', name:'', icon:'⬛', count:0 };
+                    updateCraftingUI2x2(); checkCrafting2x2(); renderInventory(); break;
+                }
+            }
+        };
+        hotbarSlots.forEach(s => s.addEventListener('click', (e) => selectHotbar(parseInt(s.dataset.hotbar))));
+
+        function updateCraftingUI2x2() {
+            for (let i=0; i<4; i++) document.getElementById(`craft-slot-${i+1}`).innerHTML = playerState.craftingSlots[i] ? playerState.craftingSlots[i].icon : '';
+        }
+        function checkCrafting2x2() {
+            const items = playerState.craftingSlots.map(s=>s?s.id:null);
+            let recipe = null;
+            if (items[0]==='black_stone'&&items[1]==='black_stone'&&items[2]==='black_stone'&&items[3]==='black_stone') recipe = recipes2x2.workbench;
+            else if (items[0]==='iron'&&items[1]==='iron'&&items[2]==='iron'&&!items[3]) recipe = recipes2x2.bucket;
+            const res = document.getElementById('craft-result');
+            if (recipe) {
+                res.innerHTML = recipe.result.icon; res.classList.remove('disabled');
+                res.onclick = () => {
+                    playerState.craftingSlots = [null,null,null,null];
+                    const empty = playerState.inventory.findIndex(i=>i.id==='empty');
+                    if (empty!==-1) playerState.inventory[empty] = { id:recipe.result.id, name:recipe.result.name, icon:recipe.result.icon, count:1 };
+                    updateCraftingUI2x2(); renderInventory(); checkCrafting2x2();
+                };
+            } else { res.innerHTML='?'; res.classList.add('disabled'); res.onclick=null; }
+        }
+
+        function renderWorkbench() {
+            let html=''; for (let i=0;i<9;i++) html+=`<div class="workbench-slot" id="workbench-slot-${i}"></div>`;
+            workbenchGrid.innerHTML = html;
+        }
+
+        function placeWorkbench() {
+            const invIdx = playerState.hotbar[playerState.selectedHotbar];
+            if (invIdx===-1) return;
+            const it = playerState.inventory[invIdx];
+            if (!it || it.id!=='workbench' || it.count<=0) return;
+            const bench = new THREE.Mesh(new THREE.BoxGeometry(1,0.5,1), new THREE.MeshStandardMaterial({ color:0x8B4513 }));
+            bench.position.set(playerState.position.x,0.25,playerState.position.z); bench.castShadow=bench.receiveShadow=true; scene.add(bench);
+            playerState.placedWorkbenches.push({ mesh:bench, position:{ x:playerState.position.x, z:playerState.position.z } });
+            it.count--; if (it.count<=0) playerState.inventory[invIdx] = { id:'empty', name:'', icon:'⬛', count:0 };
+            updateHotbar(); renderInventory();
+        }
+
+        function addToInventory(itemId, cnt=1) {
+            const def = itemId==='black_stone'?{name:'Черный камень',icon:'⬛'}:{name:'Железо',icon:'⛓️'};
+            const idx = playerState.inventory.findIndex(i=>i.id===itemId);
+            if (idx!==-1) playerState.inventory[idx].count += cnt;
+            else {
+                const empty = playerState.inventory.findIndex(i=>i.id==='empty');
+                if (empty!==-1) playerState.inventory[empty] = { id:itemId, name:def.name, icon:def.icon, count:cnt };
+            }
+            renderInventory(); updateUI();
+        }
+
+        function updateUI() {
+            tank1Fill.style.height = playerState.tank1+'%'; tank2Fill.style.height = playerState.tank2+'%';
+            tank1Value.textContent = Math.round(playerState.tank1)+'%'; tank2Value.textContent = Math.round(playerState.tank2)+'%';
+            hpFill.style.width = playerState.hp+'%';
+            const total = playerState.tank1+playerState.tank2;
+            oxygenLow.style.display = (total<30 && total>0) ? 'block' : 'none';
+            statusEffect.style.display = playerState.isSuffocating ? 'block' : 'none';
+            if (playerState.hp<=0) { alert('ТЫ ЗАДОХНУЛСЯ'); location.reload(); }
+        }
+
+        setInterval(() => {
+            if (!playerState.gameStarted) return;
+            const loss = 3*(1+playerState.helmetCrack);
+            if (playerState.tank1>0) playerState.tank1 = Math.max(0, playerState.tank1-loss);
+            else if (playerState.tank2>0) playerState.tank2 = Math.max(0, playerState.tank2-loss);
+            if (playerState.tank1+playerState.tank2 <= 0) {
+                playerState.isSuffocating = true;
+                playerState.hp = Math.max(0, playerState.hp-15);
+            } else playerState.isSuffocating = false;
+            updateUI();
+        }, 1300);
+
+        function movePlayer() {
+            if (!playerState.gameStarted || playerState.inventoryOpen || playerState.workbenchOpen || playerState.tankBenchOpen) return;
+            const sp = 0.15; let moved = false;
+            if (keyState.w) { playerState.position.z -= sp; moved = true; }
+            if (keyState.s) { playerState.position.z += sp; moved = true; }
+            if (keyState.a) { playerState.position.x -= sp; moved = true; }
+            if (keyState.d) { playerState.position.x += sp; moved = true; }
+            const lim = playerState.groundRadius - 2;
+            playerState.position.x = Math.max(-lim, Math.min(lim, playerState.position.x));
+            playerState.position.z = Math.max(-lim, Math.min(lim, playerState.position.z));
+            if (moved) {
+                playerGroup.position.set(playerState.position.x,0.5,playerState.position.z);
+                camera.position.set(playerState.position.x,3,playerState.position.z+8);
+                camera.lookAt(playerState.position.x,1.5,playerState.position.z);
+            }
+        }
+
+        function checkCollection() {
+            if (!playerState.gameStarted || playerState.inventoryOpen || playerState.workbenchOpen || playerState.tankBenchOpen) return;
+            for (let i=0; i<playerState.resources.length; i++) {
+                const r = playerState.resources[i]; if (r.collected) continue;
+                const dx = r.mesh.position.x - playerState.position.x, dz = r.mesh.position.z - playerState.position.z;
+                if (Math.sqrt(dx*dx+dz*dz) < 2) {
+                    interactHint.style.display = 'block'; interactHint.textContent = `Нажми F чтобы собрать (${r.amount} шт)`;
+                    const onKey = (e) => { if (e.code==='KeyF') { addToInventory(r.type.id, r.amount); scene.remove(r.mesh); r.collected = true; interactHint.style.display = 'none'; } };
+                    window.addEventListener('keydown', onKey); setTimeout(()=>window.removeEventListener('keydown', onKey), 100);
+                    break;
+                }
+            }
+            for (let b of playerState.placedWorkbenches) {
+                const dx = b.position.x - playerState.position.x, dz = b.position.z - playerState.position.z;
+                if (Math.sqrt(dx*dx+dz*dz) < 2) {
+                    interactHint.style.display = 'block'; interactHint.textContent = 'ПКМ чтобы открыть верстак';
+                    const onMouse = (e) => { if (e.button===2) { e.preventDefault(); playerState.workbenchOpen = true; workbenchContainer.style.display = 'block'; renderWorkbench(); } };
+                    document.addEventListener('mousedown', onMouse); setTimeout(()=>document.removeEventListener('mousedown', onMouse), 100);
+                    return;
+                }
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!playerState.gameStarted) return;
+            if ((e.key.toLowerCase()==='e'||e.key.toLowerCase()==='у') && !playerState.inventoryOpen && !playerState.workbenchOpen && !playerState.tankBenchOpen) {
+                e.preventDefault(); placeWorkbench();
+            }
+        });
+
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        window.addEventListener('keydown', function start(e) {
+            if (!playerState.gameStarted && e.key!=='Escape') {
+                playerState.gameStarted = true;
+                document.getElementById('info').style.display = 'none';
+                document.getElementById('cursor').style.display = 'none';
+                hideTutorial();
+            }
+        });
+        window.addEventListener('click', () => {
+            if (!playerState.gameStarted) {
+                playerState.gameStarted = true;
+                document.getElementById('info').style.display = 'none';
+                document.getElementById('cursor').style.display = 'none';
+                hideTutorial();
+            }
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            movePlayer();
+            checkCollection();
+            if (playerState.graphics === 'ultra') {
+                stars.rotation.y += 0.0002;
+                if (particles) particles.rotation.y += 0.001;
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+        // ==================== СТАРТ ====================
+        updateUI(); renderInventory(); renderWorkbench();
+        createMap('medium');
+        updateGraphics('ultra');
+        document.querySelector('[data-graphics="ultra"]').classList.add('active');
+        document.querySelector('[data-size="medium"]').classList.add('active');
+    </script>
+</body>
+</html>
